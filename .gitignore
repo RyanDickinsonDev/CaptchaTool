@@ -1,0 +1,31 @@
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+
+# Logs
+logs/
+*.log
+
+# Coverage & build outputs
+coverage/
+dist/
+build/
+.nyc_output/
+
+# Public build artifacts
+/public/
+
+# System & IDE junk
+.DS_Store
+.vscode/
+.idea/
+.cache/
+.eslintcache
+
+# PM2 files (optional)
+ecosystem.config.js
+pm2.log
+
+todo.txt
