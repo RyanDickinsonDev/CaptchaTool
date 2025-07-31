@@ -15,7 +15,13 @@
     "crypto": "^1.0.1",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
-    "express-rate-limit": "^7.5.0"
+    "express-basic-auth": "^1.2.1",
+    "express-rate-limit": "^7.5.0",
+    "express-session": "^1.18.1",
+    "passport": "^0.7.0",
+    "passport-local": "^1.0.0",
+    "rate-limit-redis": "^4.2.0",
+    "redis": "^5.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

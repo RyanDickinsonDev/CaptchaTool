@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CAPTCHA Admin Dashboard</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            background: #f0f4f8;
+            margin: 0;
+            padding: 2rem;
+            color: #1f2937;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            margin: 0;
+        }
+
+        button.logout {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .log-viewer {
+            white-space: pre-wrap;
+            background: #1e1e1e;
+            color: #dcdcdc;
+            padding: 1rem;
+            border-radius: 6px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        button.log-button {
+            margin-left: 0.5rem;
+            padding: 0.3rem 0.6rem;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>CAPTCHA Admin Dashboard</h1>
+        <button class="logout" onclick="logout()">Logout</button>
+    </header>
+
+    <div class="card">
+        <h2>General Stats</h2>
+        <pre id="stats">Loading...</pre>
+    </div>
+
+    <div class="card">
+        <h2>Per-Site Validation Logs</h2>
+        <div id="sites">Loading...</div>
+        <div id="log-output" class="log-viewer" style="display: none;"></div>
+    </div>
+
+    <div class="card">
+        <h2>Health Check</h2>
+        <pre id="health">Loading...</pre>
+        <label><input type="checkbox" id="autorefresh"> Auto-refresh every 5s</label>
+    </div>
+
+    <script>
+        let refreshInterval = null;
+
+        async function fetchJson(url) {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`${url} failed`);
+            return await res.json();
+        }
+
+        async function loadStats() {
+            try {
+                document.getElementById("stats").textContent = "Refreshing...";
+                const data = await fetchJson("/admin/stats");
+                document.getElementById("stats").textContent = JSON.stringify(data, null, 2);
+            } catch {
+                document.getElementById("stats").textContent = "Failed to load stats.";
+            }
+        }
+
+        async function loadSites() {
+            try {
+                const data = await fetchJson("/admin/sites");
+                const sitesDiv = document.getElementById("sites");
+                sitesDiv.innerHTML = "";
+                data.forEach(site => {
+                    const div = document.createElement("div");
+                    div.innerHTML = `<strong>${site.domain}</strong> – ${site.count} entries
+                <button class="log-button" onclick="loadLog('${site.domain}')">View Log</button>`;
+                    sitesDiv.appendChild(div);
+                });
+            } catch {
+                document.getElementById("sites").textContent = "Failed to load sites.";
+            }
+        }
+
+        async function loadLog(domain) {
+            try {
+                const res = await fetch(`/admin/log/${domain}`);
+                const logText = await res.text();
+                const logOutput = document.getElementById("log-output");
+                logOutput.style.display = "block";
+                logOutput.textContent = `Log for ${domain}:\n\n${logText}`;
+            } catch {
+                document.getElementById("log-output").textContent = "Failed to load log.";
+            }
+        }
+
+        async function loadHealth() {
+            try {
+                document.getElementById("health").textContent = "Refreshing...";
+                const data = await fetchJson("/admin/health");
+                document.getElementById("health").textContent = JSON.stringify(data, null, 2);
+            } catch {
+                document.getElementById("health").textContent = "Failed to load health.";
+            }
+        }
+
+        function logout() {
+            fetch("/admin/logout").then(() => {
+                window.location.href = "/admin/login";
+            });
+        }
+
+        function toggleAutoRefresh(enabled) {
+            if (enabled) {
+                refreshInterval = setInterval(() => {
+                    loadStats();
+                    loadHealth();
+                }, 30000);
+            } else {
+                clearInterval(refreshInterval);
+            }
+            localStorage.setItem("autoRefreshEnabled", enabled ? "1" : "0");
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadStats();
+            loadSites();
+            loadHealth();
+
+            const checkbox = document.getElementById("autorefresh");
+            const saved = localStorage.getItem("autoRefreshEnabled") === "1";
+            checkbox.checked = saved;
+            if (saved) toggleAutoRefresh(true);
+
+            checkbox.addEventListener("change", (e) => {
+                toggleAutoRefresh(e.target.checked);
+            });
+        });
+    </script>
+
+</body>
+
+</html>

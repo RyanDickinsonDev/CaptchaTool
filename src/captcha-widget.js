@@ -4,7 +4,7 @@
 
   const shadowRoot = container.attachShadow({ mode: "open" });
 
-  const res = await fetch("https://captchatool.com/generate", { method: "POST" });
+  const res = await fetch("https://captchatool.com/generate", { method: "POST",  credentials: "include" });
   const { captchaId, question } = await res.json();
 
   shadowRoot.innerHTML = `
@@ -46,6 +46,7 @@
 
     const res = await fetch("https://captchatool.com/validate", {
       method: "POST",
+       credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         captchaId,
